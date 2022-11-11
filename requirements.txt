@@ -1,4 +1,4 @@
 streamlit-plotly-events==0.0.6
-streamlit==1.1.0
+streamlit
 datetime
 numpy
