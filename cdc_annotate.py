@@ -11,6 +11,8 @@ import helper_st
 #select points in range
 # a, b = st.columns([0.2, 0.8])
 # with a:
+st.set_page_config(layout="wide")
+
 st.write('Instructions: Select a regime and highlight the region on the graph that corresponds to that regime.')
 regime = st.radio("Pick a Regime: ", ['Up', 'Down', 'Flat', "None"], horizontal=True)
 
