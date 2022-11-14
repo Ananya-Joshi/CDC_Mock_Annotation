@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 import pandas as pd
+from delphi_epidata import Epidata
 import numpy as np
 import helper_st
 
@@ -12,22 +13,59 @@ import helper_st
 # a, b = st.columns([0.2, 0.8])
 # with a:
 st.set_page_config(layout="wide")
+#
+# st.title("Label Regimes in Flu Data")
+st.write('### Instructions:')
+st.write('##### Select a regime and highlight the region on the graph that corresponds to that regime.')
+regime = st.radio("", ['Up', 'Down', 'Flat', "None"], horizontal=True)
 
-st.write('Instructions: Select a regime and highlight the region on the graph that corresponds to that regime.')
-regime = st.radio("Pick a Regime: ", ['Up', 'Down', 'Flat', "None"], horizontal=True)
+title = "CA FluSurv Hospitalization Rate"
+df_old = pd.read_csv("ca_flusurvdata.csv")[['epiweek', 'rate_overall']]
 
-df_list, dates_list, titles, natl_ref, captions = helper_st.generate_inputs()
-
-title = titles[1]
-df_old= df_list[1][['received_date', 'all']]
+df_old.columns = ['received_date', 'all']
 df_old['label'] = "None"
+
+df_old['received_date'] = df_old['received_date'].astype(int)
+#gap is defined in the same year
+dates_subset = [f"{x}{str(y).zfill(2)}" for x in range(2013, 2022) for y in range(1, 50)]
+dates_df = pd.DataFrame()
+dates_df['received_date'] = dates_subset
+dates_df['received_date'] = dates_df['received_date'].astype(int)
+
+#st.write(dates_df)
+df_old = df_old.merge(dates_df, left_on='received_date', right_on='received_date', how='outer').sort_values('received_date')#.reset_index().drop_duplicates(keep="first")
+df_old['old_date'] = df_old['received_date'].copy()
+df_old['received_date']  = df_old['received_date'].astype(str)+ "-1"
+df_old['received_date'] = pd.to_datetime(df_old['received_date'], format="%Y%W-%w")
+#st.write(df_old)
 if 'points' not in st.session_state:
     st.session_state['points'] = df_old
     st.session_state['state'] = "None"
+    st.session_state['range'] = [df_old['received_date'].iloc[40],
+                        df_old['received_date'].iloc[-40]]
+
 df = st.session_state['points']
+# st.write(df_old)
+# range_dates = st.select_slider("Epiweeks:", df_old['old_date'],
+#                         value = [df_old['old_date'].iloc[40],
+#                         df_old['old_date'].iloc[-40]]
+#                         )#, value=[df_old['received_date'].min(), df_old['received_date'].max()])
+#
+# if range_dates != st.session_state['range']:
+#     st.session_state['range']= range_dates
+#     st.experimental_rerun()
+#
+# range_dates_transform = [pd.to_datetime(str(range_dates[0])+"-1", format="%Y%W-%w"),
+#                         pd.to_datetime(str(range_dates[-1])+"-1", format="%Y%W-%w"),
+#                          ]
+#df = df.query("received_date > @range_dates[0] and  received_date < @range_dates[1]")
+
+#
+# st.write(df['received_date'])
+# st.write(df)
 from plotly.subplots import make_subplots
 fig = make_subplots(specs=[[{"secondary_y": True}]])
-fig.update_layout(title=title, showlegend=True,selectdirection='h', xaxis_title='Date', yaxis_title=title, dragmode='select')
+
 df_gray = df
 fig.add_trace(go.Scatter(x=df_gray['received_date'], y=df_gray['all'],marker=dict(
         color='gray'), name='Indicator Value', mode='markers+lines'))
@@ -45,8 +83,21 @@ df_flat = df.query('label =="Flat"')
 fig.add_trace(go.Scatter(x=df_flat['received_date'], y=df_flat['all'],marker=dict(
         color='black'), name='Flat', mode='markers'))
 
-fig.update_xaxes(fixedrange=True)
-fig.update_yaxes(fixedrange=True)
+#fig.update_xaxes(fixedrange=True)
+fig.update_yaxes(fixedrange=True).update_traces(connectgaps=False)
+# st.write(df['received_date'])
+
+fig.update_layout(xaxis=dict(
+        # range=[range_dates_transform[0], range_dates_transform[1]],
+        tickformat="%Y-%W",
+rangeslider=dict(
+            visible=True
+        ),
+    ),
+
+
+    title=title, showlegend=True,selectdirection='h', xaxis_title='Epiweek',   yaxis_title="Hospital admissions rate (per 100,000)", dragmode='select')
+
 selected_points = plotly_events(fig, select_event=True, override_width="100%")
 
 if st.session_state['state'] != selected_points:
