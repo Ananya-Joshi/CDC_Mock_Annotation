@@ -2,9 +2,6 @@ import streamlit as st
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 import pandas as pd
-from delphi_epidata import Epidata
-import numpy as np
-import helper_st
 
 #only allow scrolling, do not allow zoom.
 #select points as up, down, or flat
