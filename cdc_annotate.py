@@ -45,7 +45,7 @@ if 'points' not in st.session_state:
 df = st.session_state['points']
 # st.write(df_old)
 st.write("##### Select Epiweeks to Zoom:")
-range_dates = st.select_slider(df_old['old_date'],
+range_dates = st.select_slider("", df_old['old_date'],
                         value = [df_old['old_date'].iloc[40],
                         df_old['old_date'].iloc[-40]]
                         )#, value=[df_old['received_date'].min(), df_old['received_date'].max()])
