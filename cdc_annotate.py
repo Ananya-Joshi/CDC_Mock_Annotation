@@ -38,23 +38,24 @@ df_old['received_date'] = pd.to_datetime(df_old['received_date'], format="%Y%W-%
 if 'points' not in st.session_state:
     st.session_state['points'] = df_old
     st.session_state['state'] = "None"
+    st.session_state['fig'] = go.Figure()
     st.session_state['range'] = [df_old['received_date'].iloc[40],
                         df_old['received_date'].iloc[-40]]
 
 df = st.session_state['points']
 # st.write(df_old)
-# range_dates = st.select_slider("Epiweeks:", df_old['old_date'],
-#                         value = [df_old['old_date'].iloc[40],
-#                         df_old['old_date'].iloc[-40]]
-#                         )#, value=[df_old['received_date'].min(), df_old['received_date'].max()])
+range_dates = st.select_slider("Epiweeks:", df_old['old_date'],
+                        value = [df_old['old_date'].iloc[40],
+                        df_old['old_date'].iloc[-40]]
+                        )#, value=[df_old['received_date'].min(), df_old['received_date'].max()])
+
+if range_dates != st.session_state['range']:
+    st.session_state['range']= range_dates
+    st.experimental_rerun()
 #
-# if range_dates != st.session_state['range']:
-#     st.session_state['range']= range_dates
-#     st.experimental_rerun()
-#
-# range_dates_transform = [pd.to_datetime(str(range_dates[0])+"-1", format="%Y%W-%w"),
-#                         pd.to_datetime(str(range_dates[-1])+"-1", format="%Y%W-%w"),
-#                          ]
+range_dates_transform = [pd.to_datetime(str(range_dates[0])+"-1", format="%Y%W-%w"),
+                        pd.to_datetime(str(range_dates[-1])+"-1", format="%Y%W-%w"),
+                         ]
 #df = df.query("received_date > @range_dates[0] and  received_date < @range_dates[1]")
 
 #
@@ -85,18 +86,17 @@ fig.update_yaxes(fixedrange=True).update_traces(connectgaps=False)
 # st.write(df['received_date'])
 
 fig.update_layout(xaxis=dict(
-        # range=[range_dates_transform[0], range_dates_transform[1]],
+        range=[range_dates_transform[0], range_dates_transform[1]],
         tickformat="%Y-%W",
-rangeslider=dict(
-            visible=True
-        ),
+# rangeslider=dict(
+#             visible=True
+#         )
     ),
 
 
     title=title, showlegend=True,selectdirection='h', xaxis_title='Epiweek',   yaxis_title="Hospital admissions rate (per 100,000)", dragmode='select')
-
+#fig.update_xaxes(range=(pd.to_datetime("11/1/2014"), pd.to_datetime("11/1/2017")))
 selected_points = plotly_events(fig, select_event=True, override_width="100%")
-
 if st.session_state['state'] != selected_points:
     st.session_state['state'] = selected_points
     if len(selected_points) > 0:
@@ -108,3 +108,4 @@ if st.session_state['state'] != selected_points:
         st.experimental_rerun()
 
 st.button("Submit")
+# print(fig.layout.xaxis.range)
